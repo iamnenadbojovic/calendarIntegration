@@ -27,7 +27,17 @@ namespace CalendarIntegrationApi
         /// <summary>
         /// Time the user attended the meting in seconds 
         /// </summary>
-        public int? AttendanceInterval { get; set; }
+        public object? AttendanceIntervals { get; set; }
+
+        /// <summary>
+        /// Join date time
+        /// </summary>
+        public DateTimeOffset? JoinDateTime { get; set; }
+
+        /// <summary>
+        /// Leave date time
+        /// </summary>
+        public DateTimeOffset? LeaveDateTime { get; set; }
 
         /// <summary>
         /// Attendee Name

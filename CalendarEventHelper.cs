@@ -11,9 +11,14 @@ namespace CalendarIntegrationApi
         public string? OrganizerId { get; set; }
 
         /// <summary>
+        /// Join Meeting JoinWebUrl
+        /// </summary>
+        public string JoinWebUrl { get; set; }
+
+        /// <summary>
         /// Join Meeting Id
         /// </summary>
-        public string JoinMeetingId { get; set; }
+        public string MeetingId { get; set; }
 
         /// <summary>
         /// Attendance Information
