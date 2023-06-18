@@ -23,7 +23,7 @@ namespace CalendarIntegrationApi
             // file if it exists in the same folder as the app (make sure that the 
             // "Copy to Output Directory" property of the appsettings.json file is "Copy if newer").
 
-
+            var downstream = configuration.GetSection("DownstreamApi");
             builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration)
                    .EnableTokenAcquisitionToCallDownstreamApi()
                        .AddMicrosoftGraph(configuration.GetSection("DownstreamApi"))

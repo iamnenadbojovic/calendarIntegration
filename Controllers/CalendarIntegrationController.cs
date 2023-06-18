@@ -2,6 +2,7 @@ using Microsoft.Graph;
 using Microsoft.Identity.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using System.Linq.Expressions;
 
 namespace CalendarIntegrationApi.Controllers
 {
@@ -19,8 +20,8 @@ namespace CalendarIntegrationApi.Controllers
             _graphServiceClient = graphServiceClient;
         }
 
-        [HttpGet(Name = "GetCalendarIntegration")]
-        public async Task<ActionResult> Get(string email, bool showOnlyUserAttendance = true)
+        [HttpGet(Name = "GetCalendarIntegration"), Route("user")]
+        public async Task<ActionResult> Get(string email)
         {
             var users = await GetUsers(_graphServiceClient);
             if (users == null)
@@ -59,13 +60,72 @@ namespace CalendarIntegrationApi.Controllers
                     var attendanceRecords = await GetMeetingAttendanceRecords(_graphServiceClient,
                         calendarEventHelper.OrganizerId, onlineMeeting.Id, attendanceReport.Id);
 
-                    if (showOnlyUserAttendance)
+
+                    foreach (var attendanceRecord in attendanceRecords)
                     {
+                        // automapper
+                        if (attendanceRecord.EmailAddress == email)
+                        {
+                            calendarEventHelper.AttendanceInformation.Atendee.AttendanceInterval = attendanceRecord.TotalAttendanceInSeconds;
+                            calendarEventHelper.AttendanceInformation.Meeting = new MeetingInformation
+                            {
+                                Categories = calendarEventHelper.Categories,
+                                StartDateTime = onlineMeeting.StartDateTime,
+                                EndDateTime = onlineMeeting.EndDateTime,
+                                Subject = onlineMeeting.Subject,
+                            };
+                        };
+                        attendanceResult.Add(calendarEventHelper);
+                    }
+
+                }
+            }
+
+            return Ok(attendanceResult);
+        }
+
+        [HttpGet(Name = "GetCalendarIntegrationAll"), Route("events")]
+        public async Task<ActionResult> Get()
+        {
+            var users = await GetUsers(_graphServiceClient);
+            if (users == null)
+            {
+                return BadRequest("No users in system");
+            }
+
+            var CalendarEventHelpers = new List<CalendarEventHelper>();
+            var attendanceResult = new List<CalendarEventHelper>();
+            foreach (var employee in users)
+            {
+                var EmployeeUserEvents = await GetUserCalendarEvents(_graphServiceClient, employee, users);
+                CalendarEventHelpers = CalendarEventHelpers.Union(EmployeeUserEvents).Distinct().ToList();
+
+                foreach (var calendarEventHelper in CalendarEventHelpers)
+                {
+                    var onlineMeetings = await _graphServiceClient.Users[calendarEventHelper.OrganizerId].OnlineMeetings
+                        .Request().Filter($"joinMeetingIdSettings/joinMeetingId eq '{calendarEventHelper.JoinMeetingId}'")
+                        .WithAppOnly().GetAsync();
+
+                    if (onlineMeetings.IsNullOrEmpty())
+                    {
+                        return BadRequest("There are no Online Meetings for this User");
+                    }
+
+                    var onlineMeeting = onlineMeetings[0];
+
+                    var attendanceReports = await GetMeetingAttendanceReportsEvents(_graphServiceClient, calendarEventHelper.OrganizerId, onlineMeeting.Id);
+
+                    foreach (var attendanceReport in attendanceReports)
+                    {
+                        var attendanceRecords = await GetMeetingAttendanceRecords(_graphServiceClient,
+                            calendarEventHelper.OrganizerId, onlineMeeting.Id, attendanceReport.Id);
+
                         foreach (var attendanceRecord in attendanceRecords)
                         {
                             // automapper
-                            if (attendanceRecord.EmailAddress == email)
+                            if (attendanceRecord.EmailAddress == employee.Mail)
                             {
+                                calendarEventHelper.AttendanceInformation.Atendee.Name = employee.DisplayName;
                                 calendarEventHelper.AttendanceInformation.Atendee.AttendanceInterval = attendanceRecord.TotalAttendanceInSeconds;
                                 calendarEventHelper.AttendanceInformation.Meeting = new MeetingInformation
                                 {
@@ -79,9 +139,7 @@ namespace CalendarIntegrationApi.Controllers
                         }
                     }
                 }
-
             }
-
             return Ok(attendanceResult);
         }
 
@@ -92,30 +150,46 @@ namespace CalendarIntegrationApi.Controllers
         /// <returns>Meeting Id string value</returns>
         public static string MeetingId(Event eventsPage)
         {
-            var htmlContent = eventsPage.Body.Content;
-            var substringLeft = htmlContent[(htmlContent.IndexOf(">Meeting ID:") + 15)..];
-            var substringSecond = substringLeft.Substring(substringLeft.IndexOf(">") + 1, substringLeft.IndexOf("<") - substringLeft.IndexOf(">") - 1);
-            string result = string.Concat(substringSecond.Where(c => !char.IsWhiteSpace(c)));
+            string result = string.Empty;
+            try
+            {
+                var htmlContent = eventsPage.Body.Content;
+                var substringLeft = htmlContent[(htmlContent.IndexOf(">Meeting ID:") + 15)..];
+                var substringSecond = substringLeft.Substring(substringLeft.IndexOf(">") + 1, substringLeft.IndexOf("<") - substringLeft.IndexOf(">") - 1);
+                result = string.Concat(substringSecond.Where(c => !char.IsWhiteSpace(c)));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
             return result;
         }
 
+        /// <summary>
+        /// Retrieve the list of CalendarEvents from all collection pages
+        /// </summary>
+        /// <param name="graphClient">Graph Client Object</param>
+        /// <param name="employee">User Object</param>
+        /// <param name="users">List of Users</param>
+        /// <returns></returns>
         public static async Task<List<CalendarEventHelper>> GetUserCalendarEvents(GraphServiceClient graphClient, User employee, List<User> users)
         {
             var CalendarEventHelpers = new List<CalendarEventHelper>();
 
             foreach (var user in users)
             {
-                var eventsPage = await graphClient.Users[employee.Id].Calendar.Events.Request() // svi eventovi, ovde bi trebao filter za vreme, ne tresa da se uzimaju svi eventi
+                var eventsPage = await graphClient.Users[employee.Id].Calendar.Events.Request()// svi eventovi, ovde bi trebao filter za vreme, ne tresa da se uzimaju svi eventi
                 .WithAppOnly().GetAsync();
 
                 foreach (var calendarEvent in eventsPage)
                 {
-                    if (user.UserPrincipalName == calendarEvent.Organizer.EmailAddress.Address)
+                    if (user.UserPrincipalName == calendarEvent.Organizer.EmailAddress.Address && calendarEvent.IsOnlineMeeting == true)
                     {
                         var attendanceInformation = new AttendanceInformation
                         {
                             Atendee = new AtendeeInformation()
                             {
+                                Name = employee.DisplayName,
                                 ResponseType = calendarEvent.Attendees.Where(a => a.EmailAddress.Address == employee.Mail)?
                                 .FirstOrDefault()?.Status?.Response,
                                 Type = calendarEvent.Attendees.Where(a => a.EmailAddress.Address == employee.Mail)?

@@ -87,3 +87,9 @@ C:\Users\nenad.bojovic\source\repos\CalendarIntegrationApi\obj\Debug\net6.0\Cale
 C:\Users\nenad.bojovic\source\repos\CalendarIntegrationApi\obj\Debug\net6.0\ref\CalendarIntegrationApi.dll
 C:\Users\nenad.bojovic\source\repos\CalendarIntegrationApi\bin\Debug\net6.0\Microsoft.Identity.Web.dll
 C:\Users\nenad.bojovic\source\repos\CalendarIntegrationApi\bin\Debug\net6.0\Microsoft.IdentityModel.Validators.dll
+C:\Users\nenad.bojovic\source\repos\CalendarIntegrationApi\bin\Debug\net6.0\Amazon.Lambda.APIGatewayEvents.dll
+C:\Users\nenad.bojovic\source\repos\CalendarIntegrationApi\bin\Debug\net6.0\Amazon.Lambda.ApplicationLoadBalancerEvents.dll
+C:\Users\nenad.bojovic\source\repos\CalendarIntegrationApi\bin\Debug\net6.0\Amazon.Lambda.AspNetCoreServer.dll
+C:\Users\nenad.bojovic\source\repos\CalendarIntegrationApi\bin\Debug\net6.0\Amazon.Lambda.Core.dll
+C:\Users\nenad.bojovic\source\repos\CalendarIntegrationApi\bin\Debug\net6.0\Amazon.Lambda.Logging.AspNetCore.dll
+C:\Users\nenad.bojovic\source\repos\CalendarIntegrationApi\bin\Debug\net6.0\Amazon.Lambda.Serialization.SystemTextJson.dll

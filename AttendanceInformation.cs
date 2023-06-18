@@ -30,6 +30,11 @@ namespace CalendarIntegrationApi
         public int? AttendanceInterval { get; set; }
 
         /// <summary>
+        /// Attendee Name
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
         /// Attendance Status
         /// </summary>
         public ResponseType? ResponseType { get; set; }
