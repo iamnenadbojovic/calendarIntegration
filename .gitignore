@@ -154,3 +154,5 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
+/.vs/CalendarIntegrationApi/FileContentIndex/c847115e-9ce8-426c-bb67-8eb117e92776.vsidx
+/.gitignore

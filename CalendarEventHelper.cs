@@ -1,3 +1,5 @@
+using Microsoft.Graph;
+
 namespace CalendarIntegrationApi
 {
     /// <summary>
@@ -24,6 +26,11 @@ namespace CalendarIntegrationApi
         /// Attendance Information
         /// </summary>
         public AttendanceInformation AttendanceInformation { get; set; }
+
+        /// <summary>
+        /// List of Meetings
+        /// </summary>
+        public List<OnlineMeeting> OnlineMeetings { get; set; }
 
         /// <summary>
         /// Collection of categories
